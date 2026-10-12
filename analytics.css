@@ -1,345 +1,48 @@
-/* ============================================================
-   BIYAHE — Analytics Page (Dark & Orange Theme)
-   Load base.css and app-shell.css BEFORE this file.
-   ============================================================ */
-
-/* Lock the main dashboard content container to screen height */
-.dash-content {
-  height: calc(100vh - 70px); /* Adjust to match topbar height */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* Prevents whole screen scrolling */
-  padding-bottom: 20px;
-  box-sizing: border-box;
+/* BIYAHE Admin - Analytics. Load base.css + app_shell.css first. */
+.hero {
+  background: linear-gradient(120deg, #1d4ed8 0%, #1e40af 55%, #172f7a 100%);
+  color: #fff; border-radius: var(--radius-lg); padding: 24px 26px; box-shadow: var(--shadow-sm);
 }
+.hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.hero .tag { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 6px; margin-bottom: 10px; }
+.hero h1 { color: #fff; font-size: 24px; }
+.hero p.lead { color: rgba(255,255,255,0.82); font-size: 13.5px; margin-top: 6px; max-width: 640px; }
+.hero .btn-light { background: rgba(255,255,255,0.16); color: #fff; border: 1px solid rgba(255,255,255,0.35); }
+.hero .btn-light:hover { background: rgba(255,255,255,0.26); }
+.hero-chips { display: flex; flex-wrap: wrap; gap: 10px 14px; margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.22); font-size: 12.5px; color: rgba(255,255,255,0.85); }
+.hero-chip { display: inline-flex; align-items: center; gap: 8px; }
+.hero-chip b { background: rgba(255,255,255,0.18); padding: 3px 12px; border-radius: 999px; font-weight: 700; color: #fff; }
 
-/* Prevent upper cards/sections from collapsing */
-.stat-row,
-.analytics-split {
-  flex-shrink: 0;
-}
+.analytics-split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
 
-.analytics-split {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 20px;
-  align-items: stretch; /* Ensures both cards match exact height */
-}
+.bar-chart { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; height: 230px; padding-top: 16px; border-bottom: 1px solid var(--border); }
+.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 8px; }
+.bar-stack { width: 100%; max-width: 46px; display: flex; align-items: flex-end; gap: 4px; height: 100%; }
+.bar { flex: 1; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.3s ease; }
+.bar.signups { background: var(--primary-500); }
+.bar.saved { background: var(--primary-300); }
+.bar-labels { display: flex; justify-content: space-between; gap: 14px; margin-top: 8px; }
+.bar-labels span { flex: 1; text-align: center; font-size: 11.5px; color: var(--text-muted); font-weight: 500; }
+.chart-legend { display: flex; gap: 18px; margin-top: 14px; font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+.chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 
-/* Ensure panels inside split stretch fully */
-.analytics-split .panel {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
-}
+.donut-body { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 6px 0 4px; }
+.donut-wrap { position: relative; width: 160px; height: 160px; }
+.donut-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.donut-seg { fill: none; stroke-width: 22; }
+.donut-seg.commuters { stroke: var(--primary-500); }
+.donut-seg.admins { stroke: #f59e0b; }
+.donut-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.donut-center .v { font-family: var(--font-display); font-size: 24px; font-weight: 700; line-height: 1; }
+.donut-center .t { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+.legend-list { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.legend-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+.legend-item .l { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; }
+.legend-item .l i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.legend-item .r { color: var(--text-secondary); font-size: 12.5px; }
 
-/* Increased Height for Custom Native Bar Chart */
-.chart-panel-body {
-  padding: 16px 0 0 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
+.route-table-wrap { max-height: 420px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
+.route-table-wrap .data-table th { position: sticky; top: 0; z-index: 1; }
 
-.bar-chart-container {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  height: 250px;
-  padding-top: 20px;
-  border-bottom: 1px solid var(--brown-200);
-}
-
-.bar-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.bar-stack {
-  width: 100%;
-  max-width: 28px;
-  display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  height: 100%;
-}
-
-.bar {
-  flex: 1;
-  border-radius: 3px 3px 0 0;
-  transition: height 0.3s ease;
-  min-height: 4px;
-}
-
-.bar.signups {
-  background: var(--brown-500);
-  box-shadow: 0 0 8px var(--brown-100);
-}
-
-.bar.saved {
-  background: #f5cb3f;
-}
-
-.bar-label {
-  font-size: 11px;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-/* User Distribution SVG Pie / Donut Chart Panel */
-.pie-chart-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  padding: 20px 0;
-}
-
-.pie-chart-wrapper {
-  position: relative;
-  width: 160px;
-  height: 160px;
-}
-
-.pie-svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-  border-radius: 50%;
-}
-
-.pie-segment {
-  fill: none;
-  stroke-width: 24;
-  transition: stroke-dasharray 0.5s ease;
-}
-
-.pie-segment.commuters {
-  stroke: var(--brown-500);
-}
-
-.pie-segment.admins {
-  stroke: #f5cb3f;
-}
-
-.pie-segment.drivers {
-  stroke: var(--brown-300);
-}
-
-.pie-center-label {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-}
-
-.pie-center-value {
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--text-primary);
-  line-height: 1;
-}
-
-.pie-center-text {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* Pie Chart Legend List */
-.pie-legend-list {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.pie-legend-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-}
-
-.pie-legend-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pie-legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.pie-legend-dot.commuters {
-  background: var(--brown-500);
-}
-
-.pie-legend-dot.admins {
-  background: #f5cb3f;
-}
-
-.pie-legend-dot.drivers {
-  background: var(--brown-300);
-}
-
-.pie-legend-label {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.pie-legend-val {
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-
-/* Bottom Route Codes Panel: Fills remaining vertical space */
-.dash-content > .panel:last-child {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0; /* Necessary for flexbox children to scroll properly */
-  margin-top: 20px;
-}
-
-/* Scrollable Container for Table */
-/* Scrollable Container for Table */
-.route-table-wrapper {
-  flex: 1;
-  overflow-y: auto; /* Enables vertical scroll bar ONLY inside the table area */
-  overflow-x: auto;
-  margin-top: 16px;
-  padding-right: 12px; /* Adds space between table content and the scrollbar */
-}
-
-.analytics-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  text-align: left;
-}
-
-/* Sticky Header so column titles remain pinned while scrolling */
-.analytics-table th {
-  position: sticky;
-  top: 0;
-  background: var(--bg-panel, #121214);
-  color: var(--text-muted);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--brown-200);
-  z-index: 2;
-}
-
-.analytics-table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--brown-200);
-  color: var(--text-primary);
-}
-
-.route-code-badge {
-  display: inline-block;
-  padding: 3px 8px;
-  background: var(--brown-100);
-  border: 1px solid var(--brown-200);
-  border-radius: var(--radius-sm);
-  font-weight: 700;
-  color: var(--brown-500);
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-badge.active {
-  color: var(--brown-500);
-}
-
-.status-badge.inactive {
-  color: var(--text-muted);
-}
-
-.status-badge .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-/* ---------- Responsive ---------- */
-@media (max-width: 900px) {
-  .analytics-split {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Scrollbar styling specifically for scrollable cards and tables */
-.route-table-wrapper::-webkit-scrollbar,
-.dash-content::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.route-table-wrapper::-webkit-scrollbar-track,
-.dash-content::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 8px;
-}
-
-.route-table-wrapper::-webkit-scrollbar-thumb,
-.dash-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-}
-
-.route-table-wrapper::-webkit-scrollbar-thumb:hover,
-.dash-content::-webkit-scrollbar-thumb:hover {
-  background: #ff6b00;
-}
-
-.map-legend {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-primary); /* Ensures visibility across light/dark themes */
-  z-index: 10; /* Keeps legend layer above map tiles */
-}
-
-.map-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.legend-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3); /* Helps dots stand out over map textures */
-}
+@media (max-width: 900px) { .analytics-split { grid-template-columns: 1fr; } }

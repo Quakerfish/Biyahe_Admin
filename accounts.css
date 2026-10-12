@@ -1,0 +1,25 @@
+/* BIYAHE Admin - User Management. Load base.css + app_shell.css first. */
+.acc-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 12px; box-shadow: var(--shadow-sm); }
+.acc-table-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+.user-cell { display: flex; align-items: center; gap: 12px; }
+.user-avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-size: 12.5px; font-weight: 700; background: var(--primary-100); color: var(--primary); flex-shrink: 0; }
+.user-avatar.blocked { background: var(--danger-bg); color: var(--danger); }
+.user-avatar.waiting { background: var(--warn-bg); color: var(--warn); }
+.user-name { font-weight: 600; font-size: 14px; }
+.user-handle { font-size: 12px; color: var(--text-muted); }
+.role-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; background: var(--primary-50); color: var(--primary); }
+.role-chip.super { background: var(--primary-100); }
+.row-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.data-table tr.row-blocked td { background: var(--danger-row); }
+.table-foot { display: flex; justify-content: space-between; padding: 14px 18px; background: var(--bg-soft); border-top: 1px solid var(--border); font-size: 12.5px; color: var(--text-muted); }
+.data-table th.right, .data-table td.right { text-align: right; }
+
+.reset-card { background: var(--bg-panel); border: 1px solid var(--warn); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+.reset-card[hidden] { display: none; }
+.reset-head { padding: 16px 18px 12px; background: var(--warn-bg); border-bottom: 1px solid var(--border); }
+.reset-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; color: var(--warn); }
+.reset-title h3 { font-size: 15px; color: var(--text-primary, inherit); }
+.reset-head p { font-size: 12.5px; color: var(--text-secondary); margin-top: 6px; }
+.reset-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 18px; border-bottom: 1px solid var(--border); }
+.reset-row:last-child { border-bottom: 0; }
+.reset-row .user-name { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

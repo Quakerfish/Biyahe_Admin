@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BIYAHE - User Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="base.css" />
+  <link rel="stylesheet" href="app_shell.css" />
+  <link rel="stylesheet" href="accounts.css" />
+  <script src="api-config.js"></script>
+  <script src="shell.js"></script>
+</head>
+<body data-page="users">
+<div class="app-shell">
+  <aside id="sidebarMount"></aside>
+  <div class="app-main">
+    <header id="topbarMount"></header>
+
+    <main class="page">
+      <section class="stat-grid">
+        <div class="stat-card">
+          <div><p class="stat-label">Total Accounts</p><p class="stat-value" id="cntTotal" data-skel>0</p><p class="stat-note">Admin accounts registered</p></div>
+          <div class="stat-icon" data-icon="users"></div>
+        </div>
+        <div class="stat-card">
+          <div><p class="stat-label">Waiting Approval</p><p class="stat-value" id="cntWaiting" data-skel>0</p><p class="stat-note">Need a superadmin decision</p></div>
+          <div class="stat-icon amber" data-icon="clock"></div>
+        </div>
+        <div class="stat-card">
+          <div><p class="stat-label">Approved</p><p class="stat-value" id="cntApproved" data-skel>0</p><p class="stat-note" id="cntApprovedNote" data-skel>&nbsp;</p></div>
+          <div class="stat-icon green" data-icon="shield"></div>
+        </div>
+        <div class="stat-card">
+          <div><p class="stat-label">Blocked Accounts</p><p class="stat-value" id="cntBlocked" style="color:var(--danger)" data-skel>0</p><p class="stat-note">Cannot log in</p></div>
+          <div class="stat-icon red" data-icon="ban"></div>
+        </div>
+      </section>
+
+      <section class="reset-card" id="resetCard" hidden>
+        <div class="reset-head">
+          <div class="reset-title"><span id="resetIcon"></span><h3>Password Reset Requests</h3><span class="chip chip-warn" id="resetCount">0</span></div>
+          <p>These admins asked for a new password. Approving makes their requested password take effect; rejecting discards it. Confirm who is asking before you approve.</p>
+        </div>
+        <div id="resetList"></div>
+      </section>
+
+      <section class="acc-toolbar">
+        <div class="search-box"></div>
+        <div class="page-actions">
+          <div class="seg" id="accTabs">
+            <button class="is-active" data-filter="all">All Accounts</button>
+            <button data-filter="Waiting Approval">Waiting Approval</button>
+            <button data-filter="Approved">Approved</button>
+            <button data-filter="Blocked">Blocked</button>
+          </div>
+          <button class="btn btn-dark btn-sm" id="exportBtn" type="button"></button>
+        </div>
+      </section>
+
+      <section class="acc-table-card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Account User</th><th>System Role</th><th>Status</th><th class="right">Action</th></tr>
+            </thead>
+            <tbody id="accBody"><tr class="sk-wrap"><td><span class="sk-line" style="width:40%"></span></td><td><span class="sk-line" style="width:70%"></span></td><td><span class="sk-line" style="width:50%"></span></td><td><span class="sk-line" style="width:35%"></span></td></tr><tr class="sk-wrap"><td><span class="sk-line" style="width:40%"></span></td><td><span class="sk-line" style="width:70%"></span></td><td><span class="sk-line" style="width:50%"></span></td><td><span class="sk-line" style="width:35%"></span></td></tr><tr class="sk-wrap"><td><span class="sk-line" style="width:40%"></span></td><td><span class="sk-line" style="width:70%"></span></td><td><span class="sk-line" style="width:50%"></span></td><td><span class="sk-line" style="width:35%"></span></td></tr><tr class="sk-wrap"><td><span class="sk-line" style="width:40%"></span></td><td><span class="sk-line" style="width:70%"></span></td><td><span class="sk-line" style="width:50%"></span></td><td><span class="sk-line" style="width:35%"></span></td></tr><tr class="sk-wrap"><td><span class="sk-line" style="width:40%"></span></td><td><span class="sk-line" style="width:70%"></span></td><td><span class="sk-line" style="width:50%"></span></td><td><span class="sk-line" style="width:35%"></span></td></tr></tbody>
+          </table>
+        </div>
+        <div class="table-foot"><span id="showingNote">Showing 0 accounts</span><span>Biyahe Admin Directory</span></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+const { api, escapeHtml, showToast, icon, initials, roleLabel, exportCsv } = Biyahe;
+
+let me = null;
+let admins = [];
+let filter = 'all';
+let resets = [];
+
+document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = icon(el.dataset.icon, 'lg'); });
+document.getElementById('resetIcon').innerHTML = icon('lock');
+document.getElementById('exportBtn').innerHTML = icon('download', 'sm') + '<span>Export CSV</span>';
+document.querySelector('.search-box').innerHTML = icon('search', 'sm') + '<input type="text" id="accSearch" placeholder="Search by username or email..." />';
+
+function statusChip(s) {
+  if (s === 'Approved') return '<span class="chip chip-success"><span class="dot"></span>Approved</span>';
+  if (s === 'Blocked') return '<span class="chip chip-solid-danger"><span class="dot"></span>Blocked</span>';
+  return '<span class="chip chip-warn"><span class="dot"></span>Waiting Approval</span>';
+}
+
+function visibleRows() {
+  const q = document.getElementById('accSearch').value.trim().toLowerCase();
+  return admins.filter(a =>
+    (filter === 'all' || a.status === filter) &&
+    (!q || a.username.toLowerCase().includes(q) || a.email.toLowerCase().includes(q)));
+}
+
+function render() {
+  const count = s => admins.filter(a => a.status === s).length;
+  document.getElementById('cntTotal').textContent = admins.length;
+  document.getElementById('cntWaiting').textContent = count('Waiting Approval');
+  document.getElementById('cntApproved').textContent = count('Approved');
+  document.getElementById('cntBlocked').textContent = count('Blocked');
+  document.getElementById('cntApprovedNote').textContent = admins.length ? (count('Approved') / admins.length * 100).toFixed(1) + '% in good standing' : ' ';
+
+  const rows = visibleRows();
+  document.getElementById('showingNote').textContent = `Showing ${rows.length} account${rows.length === 1 ? '' : 's'}`;
+  const body = document.getElementById('accBody');
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="4" class="empty">${filter === 'Waiting Approval' ? 'No accounts are waiting for approval.' : 'No accounts match.'}</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = rows.map(a => {
+    const self = me && a.admin_id === me.admin_id;
+    const tone = a.status === 'Blocked' ? 'blocked' : a.status === 'Waiting Approval' ? 'waiting' : '';
+    let actions = '';
+    if (self) {
+      actions = '<span class="chip chip-muted">This is you</span>';
+    } else {
+      if (a.status === 'Waiting Approval') {
+        actions += `<button class="btn btn-success btn-sm" data-act="status" data-id="${a.admin_id}" data-value="Approved">Approve</button>`;
+        actions += `<button class="btn btn-danger btn-sm" data-act="status" data-id="${a.admin_id}" data-value="Blocked" data-reject="1">Reject</button>`;
+      } else if (a.status === 'Approved') {
+        actions += a.role === 'superadmin'
+          ? `<button class="btn btn-outline btn-sm" data-act="role" data-id="${a.admin_id}" data-value="admin">Make Admin</button>`
+          : `<button class="btn btn-outline btn-sm" data-act="role" data-id="${a.admin_id}" data-value="superadmin">Make Super Admin</button>`;
+        actions += `<button class="btn btn-danger btn-sm" data-act="status" data-id="${a.admin_id}" data-value="Blocked">Block</button>`;
+      } else {
+        actions += `<button class="btn btn-outline btn-sm" data-act="status" data-id="${a.admin_id}" data-value="Approved">Unblock</button>`;
+      }
+    }
+    return `<tr class="${a.status === 'Blocked' ? 'row-blocked' : ''}">
+      <td><div class="user-cell"><div class="user-avatar ${tone}">${escapeHtml(initials(a.username))}</div>
+        <div><div class="user-name">${escapeHtml(a.username)}</div><div class="user-handle">${escapeHtml(a.email)}</div></div></div></td>
+      <td><span class="role-chip ${a.role === 'superadmin' ? 'super' : ''}">${escapeHtml(roleLabel(a.role))}</span></td>
+      <td>${statusChip(a.status)}</td>
+      <td class="right"><div class="row-actions">${actions}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+function fmtWhen(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return isNaN(d) ? '' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function renderResets() {
+  const card = document.getElementById('resetCard');
+  card.hidden = resets.length === 0;
+  document.getElementById('resetCount').textContent = resets.length + ' pending';
+  document.getElementById('resetList').innerHTML = resets.map(a => {
+    const self = me && a.admin_id === me.admin_id;
+    const actions = self
+      ? '<span class="chip chip-muted">Another superadmin must decide</span>'
+      : `<button class="btn btn-success btn-sm" data-reset="approve" data-id="${a.admin_id}">Approve</button>
+         <button class="btn btn-danger btn-sm" data-reset="reject" data-id="${a.admin_id}">Reject</button>`;
+    return `<div class="reset-row">
+      <div class="user-cell"><div class="user-avatar waiting">${escapeHtml(initials(a.username))}</div>
+        <div><div class="user-name">${escapeHtml(a.username)} <span class="role-chip ${a.role === 'superadmin' ? 'super' : ''}">${escapeHtml(roleLabel(a.role))}</span></div>
+        <div class="user-handle">${escapeHtml(a.email)}${a.password_reset_requested_at ? ' &middot; requested ' + escapeHtml(fmtWhen(a.password_reset_requested_at)) : ''}</div></div></div>
+      <div class="row-actions">${actions}</div>
+    </div>`;
+  }).join('');
+}
+
+async function decideReset(id, action) {
+  const a = resets.find(x => x.admin_id === id);
+  if (!a) return;
+  const msg = action === 'approve'
+    ? `Approve the password reset for ${a.username}? Their requested password will replace the current one.`
+    : `Reject the password reset for ${a.username}? Their current password stays as it is.`;
+  if (!confirm(msg)) return;
+  try {
+    await api(`/api/admin/admins/${id}/password-reset`, { method: 'PUT', body: { action } });
+    showToast(action === 'approve' ? `${a.username}'s new password is now active.` : `Reset request from ${a.username} rejected.`, 'success');
+    await load();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+document.getElementById('resetList').addEventListener('click', e => {
+  const b = e.target.closest('button[data-reset]'); if (!b) return;
+  decideReset(Number(b.dataset.id), b.dataset.reset);
+});
+
+async function load() {
+  try {
+    const [data, rq] = await Promise.all([
+      api('/api/admin/admins'),
+      api('/api/admin/admins/password-requests').catch(() => ({ admins: [] }))
+    ]);
+    admins = data.admins || [];
+    resets = rq.admins || [];
+    renderResets();
+    render();
+  } catch (e) {
+    document.getElementById('accBody').innerHTML = `<tr><td colspan="4" class="empty">${escapeHtml(e.message)}</td></tr>`;
+  }
+}
+
+async function setStatus(id, status, isReject) {
+  const a = admins.find(x => x.admin_id === id);
+  if (!a) return;
+  if (status === 'Blocked') {
+    const verb = isReject ? 'Reject' : 'Block';
+    if (!confirm(`${verb} ${a.username}? They will not be able to log in.`)) return;
+  }
+  try {
+    await api(`/api/admin/admins/${id}/status`, { method: 'PUT', body: { status } });
+    showToast(`${a.username} is now ${status}.`, 'success');
+    await load();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function setRole(id, role) {
+  const a = admins.find(x => x.admin_id === id);
+  if (!a) return;
+  if (!confirm(`Change ${a.username} to ${roleLabel(role)}?`)) return;
+  try {
+    await api(`/api/admin/admins/${id}/role`, { method: 'PUT', body: { role } });
+    showToast(`${a.username} is now ${roleLabel(role)}.`, 'success');
+    await load();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+document.getElementById('accBody').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const id = Number(b.dataset.id);
+  if (b.dataset.act === 'status') setStatus(id, b.dataset.value, !!b.dataset.reject);
+  else setRole(id, b.dataset.value);
+});
+
+document.getElementById('accTabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#accTabs button').forEach(x => x.classList.toggle('is-active', x === b));
+  filter = b.dataset.filter; render();
+});
+document.getElementById('accSearch').addEventListener('input', render);
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  exportCsv('admin-accounts', visibleRows(), [
+    { header: 'Admin ID', value: a => a.admin_id },
+    { header: 'Username', value: a => a.username },
+    { header: 'Email', value: a => a.email },
+    { header: 'Role', value: a => a.role },
+    { header: 'Status', value: a => a.status }
+  ]);
+});
+
+Biyahe.ready.then(admin => {
+  me = admin;
+  if (admin.role !== 'superadmin') { window.location.href = 'dashboard.html'; return; }
+  load();
+});
+</script>
+</body>
+</html>

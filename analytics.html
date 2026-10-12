@@ -3,417 +3,217 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BIYAHE — Analytics</title>
+  <title>BIYAHE - Analytics</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="base.css" />
   <link rel="stylesheet" href="app_shell.css" />
   <link rel="stylesheet" href="analytics.css" />
   <script src="api-config.js"></script>
+  <script src="shell.js"></script>
 </head>
-<body>
-
+<body data-page="analytics">
 <div class="app-shell">
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div>
-        <p class="brand-name-sm">BIYAHE</p>
-        <span class="brand-sub">Transit Management</span>
-      </div>
-    </div>
-    <nav class="side-nav">
-      <a href="dashboard.html" class="side-link"><span class="side-icon"></span>Dashboard</a>
-      <a href="analytics.html" class="side-link is-active"><span class="side-icon"></span>Analytics</a>
-      <a href="routes.html" class="side-link"><span class="side-icon"></span>Routes</a>
-      <a href="terminals.html" class="side-link"><span class="side-icon"></span>Terminals</a>
-      <a href="settings.html" class="side-link"><span class="side-icon"></span>Settings</a>
-    </nav>
-    <a href="index.html" class="side-logout">← Logout</a>
-  </aside>
-
+  <aside id="sidebarMount"></aside>
   <div class="app-main">
-    <header class="topbar">
-      <div class="topbar-welcome">
-        <span class="lead">Welcome,</span>
-        <strong id="topbarWelcomeName">Administrator</strong>
-      </div>
-      <span class="region-badge">Biyahe Route System</span>
+    <header id="topbarMount"></header>
 
-      <button class="icon-btn" onclick="loadAnalytics(true)">🔔</button>
-      <a href="settings.html" class="admin-chip">
-        <div>
-          <p class="admin-name" id="topbarAdminName">Admin</p>
-          <span class="admin-role">ADMIN</span>
+    <main class="page">
+      <section class="hero">
+        <div class="hero-top">
+          <div>
+            <span class="tag">NETWORK OVERVIEW</span>
+            <h1>Transit Network Analytics</h1>
+            <p class="lead">Route coverage, commuter sign-ups, and saved-route activity across the Biyahe network.</p>
+          </div>
+          <button class="btn btn-light" id="exportSummaryBtn" type="button"></button>
         </div>
-        <div class="avatar-circle">🧑</div>
-      </a>
-    </header>
-
-    <main class="dash-content">
-      <!-- Stat Cards -->
-      <section class="stat-row">
-        <div class="stat-card fade-in delay-1">
-          <p class="stat-label">Active Routes</p>
-          <p class="stat-value" id="stat-active-routes">0</p>
-          <p class="stat-note" id="stat-active-note">0.0% operational</p>
-        </div>
-        <div class="stat-card fade-in delay-2">
-          <p class="stat-label">Total Users</p>
-          <p class="stat-value" id="stat-total-people">0</p>
-          <p class="stat-note" id="stat-user-note">0 commuters · 0 admins</p>
-        </div>
-        <div class="stat-card fade-in delay-3">
-          <p class="stat-label">Total Terminals</p>
-          <p class="stat-value" id="stat-terminals">0</p>
-          <p class="stat-note">Registered transit hubs</p>
-        </div>
-        <div class="stat-card fade-in delay-4">
-          <p class="stat-label">GIS Waypoints</p>
-          <p class="stat-value" id="stat-waypoints">0</p>
-          <p class="stat-note" id="stat-gis-note">0 terminals · 0 landmarks</p>
+        <div class="hero-chips">
+          <span class="hero-chip">Active routes <b id="h-active" data-skel>0</b></span>
+          <span class="hero-chip">Total users <b id="h-users" data-skel>0</b></span>
+          <span class="hero-chip">Terminals <b id="h-terminals" data-skel>0</b></span>
+          <span class="hero-chip">Waypoints <b id="h-waypoints" data-skel>0</b></span>
+          <span class="hero-chip">Saved routes <b id="h-saved" data-skel>0</b></span>
         </div>
       </section>
 
-      <!-- Trends and User Distribution Split Row -->
-      <div class="dash-grid analytics-split">
-        <!-- 7-Day Trend Section -->
-        <div class="panel fade-in delay-2">
+      <section class="analytics-split">
+        <div class="panel">
           <div class="panel-head">
-            <div>
-              <h3>7-Day Activity Trend</h3>
-              <p class="sub">Daily user signups and saved route bookmarks</p>
-            </div>
-            <span class="tag-pill">Past 7 Days</span>
+            <div><h3>7-Day Activity</h3><p class="sub">Daily commuter sign-ups and saved routes</p></div>
+            <span class="chip">Past 7 days</span>
           </div>
-
-          <div class="chart-panel-body">
-            <div class="bar-chart-container" id="trendBarChart">
-              <!-- Dynamically populated bars -->
-            </div>
-          </div>
-
-          <div class="map-legend" style="margin-top: 16px;">
-            <span><span class="legend-dot" style="background:#ff6b00; border-radius: 50%;"></span>Users</span>
-            <span><span class="legend-dot" style="background:#f5cb3f; border-radius: 50%;"></span>Admins</span>
+          <div class="bar-chart" id="trendBarChart"><div class="sk-wrap sk-bars" style="width:100%"><span class="sk-block" style="height:45%"></span><span class="sk-block" style="height:70%"></span><span class="sk-block" style="height:35%"></span><span class="sk-block" style="height:85%"></span><span class="sk-block" style="height:60%"></span><span class="sk-block" style="height:25%"></span><span class="sk-block" style="height:50%"></span></div></div>
+          <div class="bar-labels" id="trendLabels"></div>
+          <div class="chart-legend">
+            <span><i style="background:var(--primary-500)"></i>Sign-ups</span>
+            <span><i style="background:var(--primary-300)"></i>Saved routes</span>
           </div>
         </div>
 
-        <!-- User Distribution Section -->
-        <div class="panel fade-in delay-3">
+        <div class="panel">
           <div class="panel-head">
-            <h3>User Distribution</h3>
-            <span class="tag-pill" id="total-users-pill">0 Users</span>
+            <div><h3>User Distribution</h3></div>
+            <span class="chip" id="total-users-pill" data-skel>0 total</span>
           </div>
-          <div class="user-dist-list" id="userDistributionContainer">
-            <!-- Dynamically populated user breakdown -->
-          </div>
+          <div id="userDistributionContainer"><div class="sk-wrap"><div class="sk-donut sk-block"></div><div class="sk-list-sm" style="margin-top:14px"><span class="sk-line" style="width:80%"></span><span class="sk-line" style="width:65%"></span></div></div></div>
         </div>
-      </div>
+      </section>
 
-      <!-- Route Codes Overview Panel -->
-      <div class="panel fade-in delay-4">
+      <section class="panel">
         <div class="panel-head">
-          <div>
-            <h3> Route Codes Overview</h3>
-            <p class="sub">Active corridors and registered jeepney codes in Metro Cebu</p>
+          <div><h3>Routes Overview</h3><p class="sub">Registered jeepney routes and their status</p></div>
+          <div class="page-actions">
+            <div class="search-box"></div>
+            <button class="btn btn-outline btn-sm" id="exportRoutesBtn" type="button"></button>
           </div>
-          <span class="tag-pill" id="table-routes-pill">0 Registered</span>
         </div>
-
-        <div class="route-table-wrapper">
-          <table class="analytics-table">
+        <div class="route-table-wrap">
+          <table class="data-table">
             <thead>
-              <tr>
-                <th>Code</th>
-                <th>Route Corridor</th>
-                <th>Vehicle Type</th>
-                <th>Status</th>
-              </tr>
+              <tr><th>Route Code</th><th>Corridor</th><th>Vehicle Type</th><th>Base Fare</th><th>Status</th></tr>
             </thead>
-            <tbody id="routesTableBody">
-              <tr>
-                <td colspan="4" style="text-align: center; color: var(--text-muted);">Loading route codes data…</td>
-              </tr>
-            </tbody>
+            <tbody id="routesTableBody"><tr class="sk-wrap"><td><span class="sk-line" style="width:40%"></span></td><td><span class="sk-line" style="width:70%"></span></td><td><span class="sk-line" style="width:50%"></span></td><td><span class="sk-line" style="width:35%"></span></td><td><span class="sk-line" style="width:45%"></span></td></tr><tr class="sk-wrap"><td><span class="sk-line" style="width:40%"></span></td><td><span class="sk-line" style="width:70%"></span></td><td><span class="sk-line" style="width:50%"></span></td><td><span class="sk-line" style="width:35%"></span></td><td><span class="sk-line" style="width:45%"></span></td></tr><tr class="sk-wrap"><td><span class="sk-line" style="width:40%"></span></td><td><span class="sk-line" style="width:70%"></span></td><td><span class="sk-line" style="width:50%"></span></td><td><span class="sk-line" style="width:35%"></span></td><td><span class="sk-line" style="width:45%"></span></td></tr><tr class="sk-wrap"><td><span class="sk-line" style="width:40%"></span></td><td><span class="sk-line" style="width:70%"></span></td><td><span class="sk-line" style="width:50%"></span></td><td><span class="sk-line" style="width:35%"></span></td><td><span class="sk-line" style="width:45%"></span></td></tr><tr class="sk-wrap"><td><span class="sk-line" style="width:40%"></span></td><td><span class="sk-line" style="width:70%"></span></td><td><span class="sk-line" style="width:50%"></span></td><td><span class="sk-line" style="width:35%"></span></td><td><span class="sk-line" style="width:45%"></span></td></tr></tbody>
           </table>
         </div>
-      </div>
-
+      </section>
     </main>
   </div>
 </div>
 
 <script>
+const { api, escapeHtml, showToast, icon, peso, exportCsv } = Biyahe;
+
 let cachedRoutes = [];
+let lastAnalytics = null;
 
-(function() {
-  const savedTheme = localStorage.getItem('biyahe-theme') || 'light';
-  document.documentElement.setAttribute('data-theme', savedTheme);
-})();
+document.getElementById('exportSummaryBtn').innerHTML = icon('download', 'sm') + '<span>Export Summary (CSV)</span>';
+document.getElementById('exportRoutesBtn').innerHTML = icon('download', 'sm') + '<span>Export Routes (CSV)</span>';
+document.querySelector('.search-box').innerHTML = icon('search', 'sm') + '<input type="text" id="routeSearch" placeholder="Search routes..." />';
 
-async function fetchAdminProfile() {
+async function loadAnalytics() {
   try {
-    const res = await fetch(`${API_BASE}/api/admin/profile`, { credentials: 'include' });
-    if (res.status === 401) {
-      window.location.href = 'index.html';
-      return;
-    }
-    const data = await res.json();
-    if (data.success && data.admin) {
-      const username = data.admin.username;
-      const welcomeNameEl = document.getElementById('topbarWelcomeName');
-      const adminNameEl = document.getElementById('topbarAdminName');
-      
-      if (welcomeNameEl) welcomeNameEl.textContent = username;
-      if (adminNameEl) adminNameEl.textContent = username;
-    }
-  } catch (err) {
-    console.error('Failed to load admin profile:', err);
-  }
-}
-
-async function loadAnalytics(isManualRefresh) {
-  try {
-    const res = await fetch(`${API_BASE}/api/analytics`, { credentials: 'include' });
-
-    if (res.status === 401) {
-      window.location.href = 'index.html';
-      return;
-    }
-
-    const data = await res.json();
-
-    if (!data.success) {
-      showToast('⚠️ ' + (data.message || 'Failed to load analytics data.'));
-      return;
-    }
-
-    renderStats(data.stats, data.user_distribution);
+    const [data, routes] = await Promise.all([api('/api/analytics'), api('/api/routes')]);
+    lastAnalytics = data;
+    renderHero(data.stats);
     renderUserDistribution(data.user_distribution, data.stats.total_people);
-    renderTrendChart(data.trend);
-
-    fetchRouteCodes();
-
-    if (isManualRefresh) {
-      showToast('📊 Analytics updated!');
-    }
+    renderTrend(data.trend);
+    cachedRoutes = Array.isArray(routes) ? routes : (routes.routes || []);
+    renderRoutesTable(cachedRoutes);
   } catch (err) {
-    console.error('Analytics fetch failed:', err);
-    showToast('⚠️ Could not reach analytics API.');
+    showToast(err.message, 'error');
+    document.getElementById('routesTableBody').innerHTML = '<tr><td colspan="5" class="empty">Could not load analytics.</td></tr>';
   }
 }
 
-async function fetchRouteCodes() {
-  try {
-    const res = await fetch(`${API_BASE}/api/routes`, { credentials: 'include' });
-    const data = await res.json();
-    
-    if (data.success && Array.isArray(data.routes)) {
-      cachedRoutes = data.routes;
-      renderRouteCodesTable(cachedRoutes);
-    } else if (Array.isArray(data)) {
-      cachedRoutes = data;
-      renderRouteCodesTable(cachedRoutes);
-    } else {
-      renderRouteCodesTable([]);
-    }
-  } catch (err) {
-    console.error('Failed to fetch route codes:', err);
-    document.getElementById('routesTableBody').innerHTML = 
-      '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">Could not load route codes table.</td></tr>';
-  }
+function renderHero(s) {
+  document.getElementById('h-active').textContent = s.active_routes.toLocaleString();
+  document.getElementById('h-users').textContent = s.total_people.toLocaleString();
+  document.getElementById('h-terminals').textContent = s.total_terminals.toLocaleString();
+  document.getElementById('h-waypoints').textContent = s.total_waypoints.toLocaleString();
+  document.getElementById('h-saved').textContent = (s.total_saved_routes || 0).toLocaleString();
 }
 
-function renderStats(stats, userDist) {
-  document.getElementById('stat-active-routes').textContent = stats.active_routes.toLocaleString();
-  document.getElementById('stat-active-note').textContent = `${stats.active_route_pct}% active (${stats.inactive_routes} inactive)`;
-  document.getElementById('stat-total-people').textContent = stats.total_people.toLocaleString();
-  document.getElementById('stat-user-note').textContent = `${(userDist.commuters || 0).toLocaleString()} commuters · ${(userDist.admins || 0).toLocaleString()} admins`;
-  document.getElementById('stat-terminals').textContent = stats.total_terminals.toLocaleString();
-  document.getElementById('stat-waypoints').textContent = stats.total_waypoints.toLocaleString();
-  document.getElementById('stat-gis-note').textContent = `${stats.total_terminals} terminals · ${stats.total_landmarks} landmarks`;
-}
+function renderUserDistribution(dist, total) {
+  const box = document.getElementById('userDistributionContainer');
+  document.getElementById('total-users-pill').textContent = `${total.toLocaleString()} total`;
+  if (!total) { box.innerHTML = '<p class="empty-note" style="text-align:center;color:var(--text-muted);padding:20px 0;">No users registered yet.</p>'; return; }
 
-function renderUserDistribution(userDist, totalUsers) {
-  const container = document.getElementById('userDistributionContainer');
-  document.getElementById('total-users-pill').textContent = `${totalUsers.toLocaleString()} Users`;
+  const commuters = dist.commuters || 0, admins = dist.admins || 0;
+  const C = 2 * Math.PI * 40;
+  const cd = (commuters / total) * C, ad = (admins / total) * C;
+  const pct = n => (n / total * 100).toFixed(1) + '%';
 
-  if (!totalUsers || totalUsers === 0) {
-    container.innerHTML = '<p class="sub" style="text-align:center;">No users registered.</p>';
-    return;
-  }
-
-  const commuters = userDist.commuters || 0;
-  const admins = userDist.admins || 0;
-  const drivers = userDist.drivers || 0;
-
-  const C = 251.327;
-
-  const commuterPct = commuters / totalUsers;
-  const adminPct = admins / totalUsers;
-  const driverPct = drivers / totalUsers;
-
-  const commuterDash = commuterPct * C;
-  const adminDash = adminPct * C;
-  const driverDash = driverPct * C;
-
-  container.innerHTML = `
-    <div class="pie-chart-body">
-      <div class="pie-chart-wrapper">
-        <svg class="pie-svg" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="40" stroke="var(--bg-soft)" stroke-width="24" fill="none" />
-          
-          <circle class="pie-segment commuters" cx="50" cy="50" r="40"
-            stroke-dasharray="${commuterDash} ${C - commuterDash}"
-            stroke-dashoffset="0" />
-
-          <circle class="pie-segment admins" cx="50" cy="50" r="40"
-            stroke-dasharray="${adminDash} ${C - adminDash}"
-            stroke-dashoffset="-${commuterDash}" />
-
-          ${driverPct > 0 ? `
-          <circle class="pie-segment drivers" cx="50" cy="50" r="40"
-            stroke-dasharray="${driverDash} ${C - driverDash}"
-            stroke-dashoffset="-${commuterDash + adminDash}" />
-          ` : ''}
+  box.innerHTML = `
+    <div class="donut-body">
+      <div class="donut-wrap">
+        <svg class="donut-svg" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="var(--bg-soft)" stroke-width="22" />
+          <circle class="donut-seg commuters" cx="50" cy="50" r="40" stroke-dasharray="${cd} ${C - cd}" stroke-dashoffset="0" />
+          <circle class="donut-seg admins" cx="50" cy="50" r="40" stroke-dasharray="${ad} ${C - ad}" stroke-dashoffset="${-cd}" />
         </svg>
-
-        <div class="pie-center-label">
-          <div class="pie-center-value">${totalUsers}</div>
-          <div class="pie-center-text">Total</div>
-        </div>
+        <div class="donut-center"><div class="v">${total.toLocaleString()}</div><div class="t">Total</div></div>
       </div>
-
-      <div class="pie-legend-list">
-        <div class="pie-legend-item">
-          <div class="pie-legend-info">
-            <span class="pie-legend-dot commuters"></span>
-            <span class="pie-legend-label">Users</span>
-          </div>
-          <span class="pie-legend-val">${commuters} (${(commuterPct * 100).toFixed(1)}%)</span>
-        </div>
-
-        <div class="pie-legend-item">
-          <div class="pie-legend-info">
-            <span class="pie-legend-dot admins"></span>
-            <span class="pie-legend-label">Admins</span>
-          </div>
-          <span class="pie-legend-val">${admins} (${(adminPct * 100).toFixed(1)}%)</span>
-        </div>
-
-        ${drivers > 0 ? `
-        <div class="pie-legend-item">
-          <div class="pie-legend-info">
-            <span class="pie-legend-dot drivers"></span>
-            <span class="pie-legend-label">Drivers</span>
-          </div>
-          <span class="pie-legend-val">${drivers} (${(driverPct * 100).toFixed(1)}%)</span>
-        </div>
-        ` : ''}
+      <div class="legend-list">
+        <div class="legend-item"><span class="l"><i style="background:var(--primary-500)"></i>Commuters</span><span class="r">${commuters.toLocaleString()} (${pct(commuters)})</span></div>
+        <div class="legend-item"><span class="l"><i style="background:#f59e0b"></i>Admins</span><span class="r">${admins.toLocaleString()} (${pct(admins)})</span></div>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
-function renderTrendChart(trend) {
-  const container = document.getElementById('trendBarChart');
-  container.innerHTML = '';
-
-  const maxVal = Math.max(...trend.signups, ...trend.saved_routes, 1);
-
-  trend.labels.forEach((label, i) => {
-    const signupVal = trend.signups[i] || 0;
-    const savedVal = trend.saved_routes[i] || 0;
-
-    const signupHeight = Math.max(Math.round((signupVal / maxVal) * 100), 4);
-    const savedHeight = Math.max(Math.round((savedVal / maxVal) * 100), 4);
-
-    const group = document.createElement('div');
-    group.className = 'bar-group';
-    group.innerHTML = `
-      <div class="bar-stack">
-        <div class="bar signups" style="height: ${signupHeight}%;" title="Signups: ${signupVal}"></div>
-        <div class="bar saved" style="height: ${savedHeight}%;" title="Saved: ${savedVal}"></div>
-      </div>
-      <span class="bar-label">${escapeHtml(label)}</span>
-    `;
-    container.appendChild(group);
-  });
-}
-
-function renderRouteCodesTable(routes) {
-  const tbody = document.getElementById('routesTableBody');
-  document.getElementById('table-routes-pill').textContent = `${routes.length} Registered`;
-
-  if (!routes || routes.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No route codes found.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = routes.map(r => {
-    const code = r.route_code || r.code || 'N/A';
-    const origin = r.origin_terminal_name || r.origin || 'Origin';
-    const dest = r.destination_terminal_name || r.destination || 'Destination';
-    const type = r.vehicle_type || 'Standard';
-    const isActive = r.is_active == 1 || r.is_active === true;
-
-    return `
-      <tr>
-        <td><span class="route-code-badge">${escapeHtml(code)}</span></td>
-        <td><strong>${escapeHtml(origin)}</strong> ➔ <strong>${escapeHtml(dest)}</strong></td>
-        <td>${escapeHtml(type)}</td>
-        <td>
-          <span class="status-badge ${isActive ? 'active' : 'inactive'}">
-            <span class="dot"></span>${isActive ? 'Active' : 'Inactive'}
-          </span>
-        </td>
-      </tr>
-    `;
+function renderTrend(trend) {
+  const chart = document.getElementById('trendBarChart');
+  const labels = document.getElementById('trendLabels');
+  const max = Math.max(...trend.signups, ...trend.saved_routes, 1);
+  chart.innerHTML = trend.labels.map((label, i) => {
+    const s = trend.signups[i] || 0, v = trend.saved_routes[i] || 0;
+    const sh = Math.max(Math.round(s / max * 100), 3), vh = Math.max(Math.round(v / max * 100), 3);
+    return `<div class="bar-group"><div class="bar-stack">
+      <div class="bar signups" style="height:${sh}%" title="${escapeHtml(label)} - sign-ups: ${s}"></div>
+      <div class="bar saved" style="height:${vh}%" title="${escapeHtml(label)} - saved routes: ${v}"></div>
+    </div></div>`;
   }).join('');
+  labels.innerHTML = trend.labels.map(l => `<span>${escapeHtml(l)}</span>`).join('');
 }
 
-function filterRouteCodesTable() {
-  const query = document.getElementById('routeCodeSearch').value.toLowerCase();
-  const filtered = cachedRoutes.filter(r => {
-    const code = (r.route_code || r.code || '').toLowerCase();
-    const origin = (r.origin_terminal_name || r.origin || '').toLowerCase();
-    const dest = (r.destination_terminal_name || r.destination || '').toLowerCase();
-    const type = (r.vehicle_type || '').toLowerCase();
-    return code.includes(query) || origin.includes(query) || dest.includes(query) || type.includes(query);
-  });
-  renderRouteCodesTable(filtered);
+function statusChip(status) {
+  return status === 'Active'
+    ? '<span class="chip chip-success"><span class="dot"></span>Active</span>'
+    : '<span class="chip chip-muted"><span class="dot"></span>Inactive</span>';
 }
 
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str ?? '';
-  return div.innerHTML;
+function renderRoutesTable(routes) {
+  const tbody = document.getElementById('routesTableBody');
+  if (!routes.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">No routes found.</td></tr>'; return; }
+  tbody.innerHTML = routes.map(r => `
+    <tr>
+      <td><span class="code-badge">${escapeHtml(r.route_code)}</span></td>
+      <td><strong>${escapeHtml(r.origin_name)}</strong> to <strong>${escapeHtml(r.destination_name)}</strong></td>
+      <td>${escapeHtml(r.vehicle_type)}</td>
+      <td>${peso(r.base_fare)}</td>
+      <td>${statusChip(r.status)}</td>
+    </tr>`).join('');
 }
 
-function showToast(message) {
-  const container = document.getElementById('toastContainer') || (function() {
-    const div = document.createElement('div');
-    div.id = 'toastContainer';
-    div.className = 'toast-container';
-    document.body.appendChild(div);
-    return div;
-  })();
-
-  const toast = document.createElement('div');
-  toast.className = 'toast-item';
-  toast.textContent = message;
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(100px)';
-    setTimeout(() => toast.remove(), 400);
-  }, 3000);
+function filteredRoutes() {
+  const q = document.getElementById('routeSearch').value.trim().toLowerCase();
+  if (!q) return cachedRoutes;
+  return cachedRoutes.filter(r => [r.route_code, r.origin_name, r.destination_name, r.vehicle_type, r.status]
+    .some(v => String(v || '').toLowerCase().includes(q)));
 }
 
-fetchAdminProfile();
-loadAnalytics(false);
+document.getElementById('routeSearch').addEventListener('input', () => renderRoutesTable(filteredRoutes()));
+
+const routeColumns = [
+  { header: 'Route Code', value: r => r.route_code },
+  { header: 'Origin', value: r => r.origin_name },
+  { header: 'Destination', value: r => r.destination_name },
+  { header: 'Vehicle Type', value: r => r.vehicle_type },
+  { header: 'Base Fare (PHP)', value: r => r.base_fare },
+  { header: 'Status', value: r => r.status }
+];
+document.getElementById('exportRoutesBtn').addEventListener('click', () => exportCsv('routes-overview', filteredRoutes(), routeColumns));
+
+document.getElementById('exportSummaryBtn').addEventListener('click', () => {
+  if (!lastAnalytics) { showToast('Data is still loading.', 'error'); return; }
+  const s = lastAnalytics.stats, t = lastAnalytics.trend;
+  const rows = [
+    ...Object.entries({
+      'Total routes': s.total_routes, 'Active routes': s.active_routes, 'Inactive routes': s.inactive_routes,
+      'Terminals': s.total_terminals, 'Landmarks': s.total_landmarks, 'Waypoints': s.total_waypoints,
+      'Commuters': s.total_users, 'Admins': s.total_admins, 'Saved routes': s.total_saved_routes
+    }).map(([k, v]) => ({ section: 'Summary', label: k, signups: v, saved: '' })),
+    ...t.labels.map((l, i) => ({ section: '7-day trend', label: l, signups: t.signups[i], saved: t.saved_routes[i] }))
+  ];
+  exportCsv('analytics-summary', rows, [
+    { header: 'Section', value: r => r.section },
+    { header: 'Item / Day', value: r => r.label },
+    { header: 'Value / Sign-ups', value: r => r.signups },
+    { header: 'Saved Routes', value: r => r.saved }
+  ]);
+});
+
+Biyahe.ready.then(loadAnalytics);
 </script>
-
 </body>
 </html>
