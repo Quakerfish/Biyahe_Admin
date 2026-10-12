@@ -137,7 +137,7 @@
     let body = null;
     try { body = JSON.parse(raw); } catch (e) { throw new Error('Server returned a non-JSON response (status ' + res.status + ').'); }
     if (!res.ok || (body && body.success === false)) {
-      throw new Error((body && (body.message || body.detail)) || 'Request failed (status ' + res.status + ').');
+      throw new Error(((body && (body.message || body.detail)) || 'Request failed (status ' + res.status + ').') + (body && body.error_type ? ' [' + body.error_type + ']' : ''));
     }
     return body;
   }

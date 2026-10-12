@@ -393,12 +393,10 @@ function simplifyLine(points, tolerance) {
 async function fetchAndDrawRoute() {
   const s = [originTerminal.longitude, originTerminal.latitude];
   const e = [destTerminal.longitude, destTerminal.latitude];
-  const url = `https://api.maptiler.com/api/routes/driving/${s[0]},${s[1]};${e[0]},${e[1]}?key=${MAPTILER_KEY}&geometries=geojson`;
+  // MapTiler has no driving-directions endpoint, so go straight to OSRM.
   try {
-    let response = await fetch(url);
-    if (!response.ok) {
-      response = await fetch(`https://router.project-osrm.org/route/v1/driving/${s[0]},${s[1]};${e[0]},${e[1]}?overview=full&geometries=geojson`);
-    }
+    const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${s[0]},${s[1]};${e[0]},${e[1]}?overview=full&geometries=geojson`);
+    if (!response.ok) throw new Error('routing failed');
     const data = await response.json();
     const geom = data.routes ? data.routes[0].geometry : data.trips[0].geometry;
     const simplified = simplifyLine(geom.coordinates, SIMPLIFY_TOLERANCE);
