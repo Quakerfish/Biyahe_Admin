@@ -61,7 +61,7 @@
           <div class="panel-head">
             <div>
               <h3>Cebu Transit Map</h3>
-              <p class="sub">Terminals and landmarks, Cebu City</p>
+              <p class="sub">Terminals and active route paths, Cebu City</p>
             </div>
             <span class="chip" id="map-active-pill" data-skel>0 Active Routes</span>
           </div>
@@ -69,21 +69,31 @@
             <div class="seg" id="layerSeg">
               <button class="is-active" data-layer="all">All Layers</button>
               <button data-layer="terminals">Terminals</button>
-              <button data-layer="landmarks">Landmarks</button>
+              <button data-layer="routes">Routes</button>
             </div>
             <div class="legend">
               <span><span class="legend-dot" style="background:#2563eb;"></span>Terminal</span>
-              <span><span class="legend-dot" style="background:#f59e0b;"></span>Landmark</span>
+              <span><span class="legend-line"></span>Route path</span>
             </div>
           </div>
           <div id="map-key-warning" class="map-key-warning">Add your MapTiler API key in the script (look for MAPTILER_KEY) to load the map tiles.</div>
-          <div class="map-canvas"><div id="cebuMap"></div><div class="map-loading" id="mapLoading"><div class="spinner"></div></div></div>
+          <div class="map-canvas">
+            <div class="map-search" id="mapSearch">
+              <div class="ms-field">
+                <span class="ms-icon" id="msIcon"></span>
+                <input id="mapSearchInput" type="text" placeholder="Loading routes..." autocomplete="off" spellcheck="false" disabled
+                       role="combobox" aria-expanded="false" aria-controls="mapSearchList" aria-label="Search active routes" />
+                <button class="ms-clear" id="mapSearchClear" type="button" aria-label="Clear search" hidden></button>
+              </div>
+              <div class="ms-list" id="mapSearchList" role="listbox" hidden></div>
+            </div>
+            <div id="cebuMap"></div><div class="map-loading" id="mapLoading"><div class="spinner"></div></div></div>
         </div>
 
         <div class="side-stack">
           <div class="panel">
             <div class="panel-head">
-              <div><h3>Terminals</h3><p class="sub">Busiest hubs by routes served</p></div>
+              <div><h3>Terminals</h3><p class="sub">Busiest hubs, click for details</p></div>
               <a class="chip" href="terminals.html" id="hub-count-pill" data-skel>0 hubs</a>
             </div>
             <div class="list-scroll" id="hubList"><div class="sk-wrap sk-list-sm"><div class="sk-item"><span class="sk-circle" style="width:34px;height:34px"></span><div style="flex:1;display:flex;flex-direction:column;gap:7px"><span class="sk-line" style="width:60%"></span><span class="sk-line" style="width:35%;height:10px"></span></div></div><div class="sk-item"><span class="sk-circle" style="width:34px;height:34px"></span><div style="flex:1;display:flex;flex-direction:column;gap:7px"><span class="sk-line" style="width:60%"></span><span class="sk-line" style="width:35%;height:10px"></span></div></div><div class="sk-item"><span class="sk-circle" style="width:34px;height:34px"></span><div style="flex:1;display:flex;flex-direction:column;gap:7px"><span class="sk-line" style="width:60%"></span><span class="sk-line" style="width:35%;height:10px"></span></div></div><div class="sk-item"><span class="sk-circle" style="width:34px;height:34px"></span><div style="flex:1;display:flex;flex-direction:column;gap:7px"><span class="sk-line" style="width:60%"></span><span class="sk-line" style="width:35%;height:10px"></span></div></div></div></div>
@@ -91,7 +101,7 @@
 
           <div class="panel">
             <div class="panel-head">
-              <div><h3>Active Routes</h3><p class="sub">Currently operating corridors</p></div>
+              <div><h3>Active Routes</h3><p class="sub">Click a route for details</p></div>
               <a class="chip" href="routes.html">Manage</a>
             </div>
             <div class="list-scroll" id="routeList"><div class="sk-wrap sk-list-sm"><div class="sk-item"><span class="sk-circle" style="width:34px;height:34px"></span><div style="flex:1;display:flex;flex-direction:column;gap:7px"><span class="sk-line" style="width:60%"></span><span class="sk-line" style="width:35%;height:10px"></span></div></div><div class="sk-item"><span class="sk-circle" style="width:34px;height:34px"></span><div style="flex:1;display:flex;flex-direction:column;gap:7px"><span class="sk-line" style="width:60%"></span><span class="sk-line" style="width:35%;height:10px"></span></div></div><div class="sk-item"><span class="sk-circle" style="width:34px;height:34px"></span><div style="flex:1;display:flex;flex-direction:column;gap:7px"><span class="sk-line" style="width:60%"></span><span class="sk-line" style="width:35%;height:10px"></span></div></div><div class="sk-item"><span class="sk-circle" style="width:34px;height:34px"></span><div style="flex:1;display:flex;flex-direction:column;gap:7px"><span class="sk-line" style="width:60%"></span><span class="sk-line" style="width:35%;height:10px"></span></div></div></div></div>
@@ -116,6 +126,10 @@ const MAP_STYLES = {
   light: `https://api.maptiler.com/maps/01a0aa36-ae40-7883-9e61-8720a18435db/style.json?key=${MAPTILER_KEY}`,
   dark: `https://api.maptiler.com/maps/01a06643-7cd4-7150-869a-610c3182da14/style.json?key=${MAPTILER_KEY}`
 };
+const ROUTE_COLORS = ['#2563eb', '#0891b2', '#7c3aed', '#db2777', '#ea580c', '#059669', '#ca8a04', '#4f46e5'];
+const colorFor = id => ROUTE_COLORS[Math.abs(id) % ROUTE_COLORS.length];
+const ROUTE_LAYERS = ['routes-layer', 'route-selected-casing', 'route-selected-layer', 'route-ends-layer'];
+const CHEVRON = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 let map = null;
 let cacheMapData = null;
@@ -123,10 +137,21 @@ let clickHandlersBound = false;
 let layerMode = 'all';
 let lastStats = null;
 let lastHubs = [];
+let allRoutes = [];
 let activeRoutes = [];
+const terminalsById = new Map();
+const lineByRouteId = new Map();
+let selectedRouteId = null;
 
 document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = icon(el.dataset.icon, 'lg'); });
 document.getElementById('exportBtn').innerHTML = icon('download', 'sm') + '<span>Export Report (CSV)</span>';
+document.getElementById('msIcon').innerHTML = icon('search', 'sm');
+document.getElementById('mapSearchClear').innerHTML = icon('x', 'sm');
+
+const money = v => (v == null || isNaN(v)) ? '--' : peso(v);
+const routeName = r => `${r.origin_name} to ${r.destination_name}`;
+
+/* ------------------------------------------------------------------ map */
 
 function initMap() {
   const theme = document.documentElement.getAttribute('data-theme') || 'light';
@@ -145,23 +170,437 @@ function initMap() {
   map.on('error', () => {});
 }
 
+function emptyFC() { return { type: 'FeatureCollection', features: [] }; }
+
+function renderMapPins(mapData) {
+  if (!map || !map.isStyleLoaded()) return;
+
+  const upsert = (id, geojson) => {
+    if (map.getSource(id)) map.getSource(id).setData(geojson);
+    else map.addSource(id, { type: 'geojson', data: geojson });
+  };
+  upsert('routes-src', mapData.routes);
+  upsert('terminals-src', mapData.terminals);
+  upsert('route-selected-src', emptyFC());
+  upsert('route-ends-src', emptyFC());
+
+  // Order matters: paths at the bottom, terminals above them, selection on top.
+  if (!map.getLayer('routes-layer')) {
+    map.addLayer({ id: 'routes-layer', type: 'line', source: 'routes-src',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': ['get', 'color'], 'line-width': 3, 'line-opacity': 0.85 } });
+  }
+  if (!map.getLayer('route-selected-casing')) {
+    map.addLayer({ id: 'route-selected-casing', type: 'line', source: 'route-selected-src',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#ffffff', 'line-width': 10, 'line-opacity': 0.95 } });
+  }
+  if (!map.getLayer('route-selected-layer')) {
+    map.addLayer({ id: 'route-selected-layer', type: 'line', source: 'route-selected-src',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': ['get', 'color'], 'line-width': 6 } });
+  }
+  if (!map.getLayer('terminals-layer')) {
+    map.addLayer({ id: 'terminals-layer', type: 'circle', source: 'terminals-src',
+      paint: { 'circle-radius': 7, 'circle-color': '#2563eb', 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' } });
+  }
+  if (!map.getLayer('route-ends-layer')) {
+    map.addLayer({ id: 'route-ends-layer', type: 'circle', source: 'route-ends-src',
+      paint: { 'circle-radius': 9,
+               'circle-color': ['match', ['get', 'role'], 'origin', '#2563eb', '#dc2626'],
+               'circle-stroke-width': 3, 'circle-stroke-color': '#ffffff' } });
+  }
+
+  if (!clickHandlersBound) {
+    clickHandlersBound = true;
+
+    // Terminals first, so a click on a terminal can mark itself handled
+    // before the (lower) route-path handler runs.
+    map.on('click', 'terminals-layer', e => {
+      e.originalEvent.__handled = true;
+      const f = e.features[0];
+      new maplibregl.Popup()
+        .setLngLat(f.geometry.coordinates)
+        .setHTML(`<div style="font-weight:700;font-size:14px;">${escapeHtml(f.properties.name)}</div>
+                  <div style="color:var(--text-muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Terminal</div>`)
+        .addTo(map);
+      revealInList('hubList', 'terminal', Number(f.properties.id));
+    });
+    map.on('click', 'routes-layer', e => {
+      if (e.originalEvent.__handled) return;
+      const f = e.features[0];
+      selectRoute(Number(f.properties.route_id), { fit: false, reveal: true });
+    });
+    ['terminals-layer', 'routes-layer'].forEach(layerId => {
+      map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
+    });
+  }
+
+  applyLayerMode();
+  applySelection(false);
+
+  const coords = (mapData.terminals.features || []).map(f => f.geometry.coordinates);
+  if (coords.length > 0 && !renderMapPins.fitted) {
+    renderMapPins.fitted = true;
+    const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
+    map.fitBounds(bounds, { padding: 60, maxZoom: 14 });
+  }
+}
+
+function applyLayerMode() {
+  if (!map || !map.isStyleLoaded()) return;
+  const set = (id, show) => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', show ? 'visible' : 'none'); };
+  const showTerminals = layerMode === 'all' || layerMode === 'terminals';
+  const showRoutes = layerMode === 'all' || layerMode === 'routes';
+  set('terminals-layer', showTerminals);
+  ROUTE_LAYERS.forEach(id => set(id, showRoutes));
+}
+
+function routeBounds(r) {
+  const line = lineByRouteId.get(r.route_id);
+  let coords = line ? line.geometry.coordinates : [];
+  if (!coords.length) {
+    coords = [r.origin_terminal_id, r.destination_terminal_id]
+      .map(id => terminalsById.get(id)).filter(t => t && t.latitude != null && t.longitude != null)
+      .map(t => [t.longitude, t.latitude]);
+  }
+  if (!coords.length) return null;
+  return coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
+}
+
+// Paints (or clears) the highlighted route; optionally flies to it.
+function applySelection(fit) {
+  if (!map || !map.isStyleLoaded() || !map.getSource('route-selected-src')) return;
+  const r = selectedRouteId == null ? null : allRoutes.find(x => x.route_id === selectedRouteId);
+  const line = r ? lineByRouteId.get(r.route_id) : null;
+
+  map.getSource('route-selected-src').setData(line ? { type: 'FeatureCollection', features: [line] } : emptyFC());
+  map.setPaintProperty('routes-layer', 'line-opacity', r ? 0.22 : 0.85);
+
+  const ends = [];
+  if (r) {
+    const lineCoords = line ? line.geometry.coordinates : [];
+    const o = terminalsById.get(r.origin_terminal_id), d = terminalsById.get(r.destination_terminal_id);
+    const oc = o && o.longitude != null ? [o.longitude, o.latitude] : lineCoords[0];
+    const dc = d && d.longitude != null ? [d.longitude, d.latitude] : lineCoords[lineCoords.length - 1];
+    if (oc) ends.push({ type: 'Feature', properties: { role: 'origin' }, geometry: { type: 'Point', coordinates: oc } });
+    if (dc) ends.push({ type: 'Feature', properties: { role: 'destination' }, geometry: { type: 'Point', coordinates: dc } });
+  }
+  map.getSource('route-ends-src').setData({ type: 'FeatureCollection', features: ends });
+
+  if (r && fit) {
+    const b = routeBounds(r);
+    if (b) map.fitBounds(b, { padding: { top: 70, bottom: 40, left: 40, right: 60 }, maxZoom: 16, duration: 700 });
+    else showToast('This route has no mapped path yet.', 'error');
+  }
+}
+
+/* ------------------------------------------------------- route selection */
+
+function selectRoute(id, opts = {}) {
+  const r = allRoutes.find(x => x.route_id === id);
+  if (!r) return;
+  selectedRouteId = id;
+  setSearchValue(r);
+  applySelection(opts.fit !== false);
+  if (opts.reveal) revealInList('routeList', 'route', id);
+}
+
+function clearSelection() {
+  selectedRouteId = null;
+  setSearchValue(null);
+  applySelection(false);
+  collapseAll('routeList');
+}
+
+/* ----------------------------------------------------------------- search */
+
+const sInput = document.getElementById('mapSearchInput');
+const sList = document.getElementById('mapSearchList');
+const sClear = document.getElementById('mapSearchClear');
+let sResults = [];
+let sIndex = -1;
+
+function setSearchValue(r) {
+  sInput.value = r ? r.route_code : '';
+  sClear.hidden = !r && !sInput.value;
+  closeSearch();
+}
+
+function searchRoutes(q) {
+  q = q.trim().toLowerCase();
+  if (!q) return activeRoutes.slice(0, 8).map(r => ({ r, score: 0 }));
+  return activeRoutes.map(r => {
+    const code = (r.route_code || '').toLowerCase();
+    const o = (r.origin_name || '').toLowerCase(), d = (r.destination_name || '').toLowerCase();
+    const v = (r.vehicle_type || '').toLowerCase();
+    let score = 9;
+    if (code === q) score = 0;
+    else if (code.startsWith(q)) score = 1;
+    else if (code.includes(q)) score = 2;
+    else if (o.includes(q) || d.includes(q) || (o + ' ' + d).includes(q)) score = 3;
+    else if (v.includes(q)) score = 4;
+    return { r, score };
+  }).filter(x => x.score < 9)
+    .sort((a, b) => a.score - b.score || a.r.route_code.localeCompare(b.r.route_code));
+}
+
+function openSearch() {
+  const q = sInput.value;
+  const all = searchRoutes(q);
+  sResults = all.slice(0, 8);
+  sIndex = sResults.length ? 0 : -1;
+
+  if (!sResults.length) {
+    sList.innerHTML = `<p class="ms-empty">No active route matches &ldquo;${escapeHtml(q.trim())}&rdquo;.</p>`;
+  } else {
+    const heading = q.trim() ? `${all.length} result${all.length === 1 ? '' : 's'}` : 'Active routes';
+    sList.innerHTML = `<p class="ms-head">${heading}</p>` + sResults.map(({ r }, i) => `
+      <button type="button" class="ms-item${i === sIndex ? ' is-active' : ''}" role="option" data-id="${r.route_id}" id="ms-opt-${i}">
+        <span class="code-badge">${escapeHtml(r.route_code)}</span>
+        <span class="ms-text">
+          <span class="ms-title">${escapeHtml(routeName(r))}</span>
+          <span class="ms-sub">${escapeHtml(r.vehicle_type)}${lineByRouteId.has(r.route_id) ? '' : ' &middot; no path mapped'}</span>
+        </span>
+        <span class="ms-fare">${money(r.base_fare)}</span>
+      </button>`).join('') +
+      (all.length > sResults.length ? `<p class="ms-foot">Showing ${sResults.length} of ${all.length}. Keep typing to narrow down.</p>` : '');
+  }
+  sList.hidden = false;
+  sInput.setAttribute('aria-expanded', 'true');
+}
+
+function closeSearch() {
+  sList.hidden = true;
+  sInput.setAttribute('aria-expanded', 'false');
+  sInput.removeAttribute('aria-activedescendant');
+}
+
+function moveSearchIndex(delta) {
+  if (!sResults.length) return;
+  sIndex = (sIndex + delta + sResults.length) % sResults.length;
+  sList.querySelectorAll('.ms-item').forEach((el, i) => el.classList.toggle('is-active', i === sIndex));
+  const act = document.getElementById('ms-opt-' + sIndex);
+  if (act) { act.scrollIntoView({ block: 'nearest' }); sInput.setAttribute('aria-activedescendant', act.id); }
+}
+
+sInput.addEventListener('focus', openSearch);
+sInput.addEventListener('input', () => { sClear.hidden = !sInput.value; openSearch(); });
+sInput.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); if (sList.hidden) openSearch(); else moveSearchIndex(1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); moveSearchIndex(-1); }
+  else if (e.key === 'Enter') {
+    e.preventDefault();
+    const hit = sResults[sIndex];
+    if (hit) selectRoute(hit.r.route_id, { fit: true, reveal: true });
+  } else if (e.key === 'Escape') {
+    if (!sList.hidden) closeSearch(); else if (sInput.value) clearSelection();
+    sInput.blur();
+  }
+});
+sList.addEventListener('mousedown', e => e.preventDefault()); // keep input focus while clicking results
+sList.addEventListener('click', e => {
+  const item = e.target.closest('.ms-item'); if (!item) return;
+  selectRoute(Number(item.dataset.id), { fit: true, reveal: true });
+  sInput.blur();
+});
+sClear.addEventListener('click', () => { clearSelection(); sInput.focus(); });
+document.addEventListener('click', e => { if (!e.target.closest('#mapSearch')) closeSearch(); });
+
+/* ------------------------------------------------------ detail templates */
+
+function termPhotos(...terms) {
+  const withPhoto = terms.filter(t => t && t.image_url);
+  if (!withPhoto.length) return '';
+  return `<div class="rd-photos">${withPhoto.map(t =>
+    `<figure><img src="${escapeHtml(t.image_url)}" alt="${escapeHtml(t.terminal_name)}" loading="lazy" onerror="this.closest('figure').remove()" /><figcaption>${escapeHtml(t.terminal_name)}</figcaption></figure>`
+  ).join('')}</div>`;
+}
+
+function statusChip(status) {
+  return `<span class="chip ${status === 'Active' ? 'chip-success' : 'chip-muted'}">${escapeHtml(status || 'Unknown')}</span>`;
+}
+
+// Same structure as the Android Route Info Card.
+function routeDetailHTML(r) {
+  const o = terminalsById.get(r.origin_terminal_id), d = terminalsById.get(r.destination_terminal_id);
+  const line = lineByRouteId.get(r.route_id);
+  const base = r.base_fare;
+  return `
+    <div class="rd">
+      <div class="rd-head">
+        <span class="code-badge">${escapeHtml(r.route_code)}</span>
+        <div class="rd-title">
+          <p class="rd-name">${escapeHtml(routeName(r))}</p>
+          <p class="rd-sub">${escapeHtml(r.vehicle_type)} ${statusChip(r.status)}</p>
+        </div>
+      </div>
+      ${termPhotos(o, d)}
+      <p class="rd-label">Terminals</p>
+      <div class="rd-timeline">
+        <div class="rd-stop"><span class="rd-dot origin"></span><div><p class="rd-k">Origin</p><p class="rd-v">${escapeHtml(r.origin_name)}</p></div></div>
+        <span class="rd-link"></span>
+        <div class="rd-stop"><span class="rd-dot dest"></span><div><p class="rd-k">Destination</p><p class="rd-v">${escapeHtml(r.destination_name)}</p></div></div>
+      </div>
+      <p class="rd-label">Fare</p>
+      <div class="rd-fares">
+        <div class="rd-fare reg"><span>Regular</span><b>${money(base)}</b></div>
+        <div class="rd-fare disc"><span>Discounted</span><b>${base == null ? '--' : money(base * 0.8)}</b><i>Student, Senior, PWD</i></div>
+      </div>
+      <div class="rd-meta">
+        <span>Mapped waypoints <b>${line ? line.properties.waypoints : 0}</b></span>
+        <span>Path <b>${line ? 'Available' : 'Not mapped'}</b></span>
+      </div>
+      ${r.description ? `<p class="rd-desc">${escapeHtml(r.description)}</p>` : ''}
+      <div class="rd-actions">
+        <button class="btn btn-primary btn-sm" type="button" data-act="show-route" data-id="${r.route_id}">Show on map</button>
+        <a class="btn btn-outline btn-sm" href="routes.html">Manage routes</a>
+      </div>
+    </div>`;
+}
+
+function terminalDetailHTML(t, fallbackName, routeCount) {
+  if (!t) {
+    return `<div class="rd"><p class="rd-desc">${escapeHtml(fallbackName)} serves ${routeCount} route${routeCount === 1 ? '' : 's'}.</p></div>`;
+  }
+  const serving = allRoutes.filter(r => r.origin_terminal_id === t.terminal_id || r.destination_terminal_id === t.terminal_id);
+  const coords = (t.latitude != null && t.longitude != null) ? `${Number(t.latitude).toFixed(5)}, ${Number(t.longitude).toFixed(5)}` : 'Not set';
+  return `
+    <div class="rd">
+      <div class="rd-head">
+        <span class="rd-pin">${icon('building', 'sm')}</span>
+        <div class="rd-title">
+          <p class="rd-name">${escapeHtml(t.terminal_name)}</p>
+          <p class="rd-sub">Terminal ${statusChip(t.status)}</p>
+        </div>
+      </div>
+      ${termPhotos(t)}
+      <div class="rd-meta">
+        <span>Coordinates <b>${coords}</b></span>
+        <span>Routes <b>${serving.length}</b></span>
+      </div>
+      ${t.description ? `<p class="rd-desc">${escapeHtml(t.description)}</p>` : ''}
+      <p class="rd-label">Routes through this terminal</p>
+      ${serving.length ? `<div class="rd-routes">${serving.map(r => `
+        <button type="button" class="rd-route" data-act="goto-route" data-id="${r.route_id}">
+          <span class="code-badge">${escapeHtml(r.route_code)}</span>
+          <span class="rd-route-name">${escapeHtml(routeName(r))}</span>
+          ${r.status === 'Active' ? '' : '<span class="chip chip-muted">Inactive</span>'}
+        </button>`).join('')}</div>` : '<p class="rd-desc">No routes use this terminal yet.</p>'}
+      <div class="rd-actions">
+        <button class="btn btn-primary btn-sm" type="button" data-act="show-terminal" data-id="${t.terminal_id}">Show on map</button>
+        <a class="btn btn-outline btn-sm" href="terminals.html">Manage terminals</a>
+      </div>
+    </div>`;
+}
+
+/* -------------------------------------------------------------- accordion */
+
+function setOpen(item, open) {
+  item.classList.toggle('is-open', open);
+  item.querySelector('.acc-head').setAttribute('aria-expanded', String(open));
+  item.querySelector('.acc-body').hidden = !open;
+}
+
+function collapseAll(listId, except) {
+  document.querySelectorAll(`#${listId} .acc-item.is-open`).forEach(it => { if (it !== except) setOpen(it, false); });
+}
+
+function ensureBody(item) {
+  const body = item.querySelector('.acc-body');
+  if (body.dataset.ready) return;
+  body.dataset.ready = '1';
+  const id = Number(item.dataset.id);
+  if (item.dataset.kind === 'route') {
+    const r = allRoutes.find(x => x.route_id === id);
+    body.innerHTML = r ? routeDetailHTML(r) : '<p class="rd-desc">Route not found.</p>';
+  } else {
+    const h = lastHubs.find(x => x.terminal_id === id);
+    body.innerHTML = terminalDetailHTML(terminalsById.get(id), h ? h.name : 'This terminal', h ? h.route_count : 0);
+  }
+}
+
+function revealInList(listId, kind, id) {
+  const item = document.querySelector(`#${listId} .acc-item[data-kind="${kind}"][data-id="${id}"]`);
+  if (!item) return;
+  collapseAll(listId, item);
+  ensureBody(item);
+  setOpen(item, true);
+  item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function flyToTerminal(id) {
+  const t = terminalsById.get(id);
+  if (!map || !t || t.latitude == null || t.longitude == null) { showToast('This terminal has no coordinates.', 'error'); return; }
+  map.flyTo({ center: [t.longitude, t.latitude], zoom: Math.max(map.getZoom(), 14.5), duration: 700 });
+}
+
+function bindAccordion(listId, kind) {
+  document.getElementById(listId).addEventListener('click', e => {
+    const act = e.target.closest('[data-act]');
+    if (act) {
+      const id = Number(act.dataset.id);
+      if (act.dataset.act === 'show-route') selectRoute(id, { fit: true });
+      else if (act.dataset.act === 'show-terminal') flyToTerminal(id);
+      else if (act.dataset.act === 'goto-route') {
+        const r = allRoutes.find(x => x.route_id === id);
+        if (r && r.status === 'Active') selectRoute(id, { fit: true, reveal: true });
+        else showToast('That route is inactive, so it is not drawn on the map.', 'error');
+      }
+      return;
+    }
+    const head = e.target.closest('.acc-head');
+    if (!head) return;
+    const item = head.closest('.acc-item');
+    const willOpen = !item.classList.contains('is-open');
+    collapseAll(listId, item);
+    if (willOpen) ensureBody(item);
+    setOpen(item, willOpen);
+    if (kind === 'route') {
+      if (willOpen) selectRoute(Number(item.dataset.id), { fit: true });
+      else if (selectedRouteId === Number(item.dataset.id)) { selectedRouteId = null; setSearchValue(null); applySelection(false); }
+    } else if (willOpen) {
+      flyToTerminal(Number(item.dataset.id));
+    }
+  });
+}
+bindAccordion('hubList', 'terminal');
+bindAccordion('routeList', 'route');
+
+/* ---------------------------------------------------------------- loading */
+
 async function loadDashboard() {
   try {
-    const [dash, routes] = await Promise.all([api('/api/dashboard'), api('/api/routes')]);
+    const [dash, routes, terminals] = await Promise.all([api('/api/dashboard'), api('/api/routes'), api('/api/terminals')]);
 
-    cacheMapData = dash.map;
+    const mapData = dash.map;
+    mapData.routes = mapData.routes || emptyFC();
+    lineByRouteId.clear();
+    mapData.routes.features.forEach(f => {
+      f.properties.color = colorFor(f.properties.route_id);
+      lineByRouteId.set(f.properties.route_id, f);
+    });
+    cacheMapData = mapData;
     lastStats = dash.stats;
     lastHubs = dash.hubs || [];
-    activeRoutes = (Array.isArray(routes) ? routes : (routes.routes || [])).filter(r => r.status === 'Active');
+
+    allRoutes = Array.isArray(routes) ? routes : (routes.routes || []);
+    activeRoutes = allRoutes.filter(r => r.status === 'Active');
+    terminalsById.clear();
+    (Array.isArray(terminals) ? terminals : (terminals.terminals || [])).forEach(t => terminalsById.set(t.terminal_id, t));
 
     renderStats(dash.stats);
     renderHubs(lastHubs);
     renderRoutes(activeRoutes);
+    sInput.disabled = false;
+    sInput.placeholder = 'Search active routes by code, terminal or type';
     if (map && map.isStyleLoaded()) renderMapPins(cacheMapData);
 
     document.getElementById('syncText').textContent = 'Data synced at ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   } catch (err) {
     document.getElementById('syncText').textContent = 'Could not load data';
+    sInput.placeholder = 'Routes unavailable';
     const ml = document.getElementById('mapLoading'); if (ml) ml.classList.add('done');
     showToast(err.message, 'error');
   }
@@ -171,90 +610,41 @@ function renderStats(s) {
   document.getElementById('stat-active-routes').textContent = s.active_routes.toLocaleString();
   document.getElementById('stat-active-routes-note').textContent = `of ${s.total_routes} total routes`;
   document.getElementById('stat-terminals').textContent = s.total_terminals.toLocaleString();
-  document.getElementById('stat-terminals-note').textContent = `${s.total_landmarks} registered landmarks`;
+  document.getElementById('stat-terminals-note').textContent = `Serving ${s.active_routes} active route${s.active_routes === 1 ? '' : 's'}`;
   document.getElementById('stat-waypoints').textContent = s.total_waypoints.toLocaleString();
   document.getElementById('stat-total-users').textContent = s.total_people.toLocaleString();
   document.getElementById('stat-total-users-note').textContent = `${s.total_users} commuters, ${s.total_admins} admins`;
   document.getElementById('map-active-pill').textContent = `${s.active_routes} Active Routes`;
 }
 
+function accRow(kind, id, headInner) {
+  return `<div class="acc-item" data-kind="${kind}" data-id="${id}">
+    <button class="acc-head" type="button" aria-expanded="false">${headInner}${CHEVRON}</button>
+    <div class="acc-body" hidden></div>
+  </div>`;
+}
+
 function renderHubs(hubs) {
   document.getElementById('hub-count-pill').textContent = `${hubs.length} hub${hubs.length === 1 ? '' : 's'}`;
   const el = document.getElementById('hubList');
   if (!hubs.length) { el.innerHTML = '<p class="empty-note">No terminals yet.</p>'; return; }
-  el.innerHTML = hubs.map(h => `
-    <div class="list-row">
-      <div><p class="list-title">${escapeHtml(h.name)}</p></div>
-      <span class="chip chip-muted">${h.route_count} route${h.route_count === 1 ? '' : 's'}</span>
-    </div>`).join('');
+  el.innerHTML = hubs.map(h => accRow('terminal', h.terminal_id, `
+      <span class="acc-main"><span class="list-title">${escapeHtml(h.name)}</span></span>
+      <span class="chip chip-muted">${h.route_count} route${h.route_count === 1 ? '' : 's'}</span>`)).join('');
 }
 
 function renderRoutes(routes) {
   const el = document.getElementById('routeList');
   if (!routes.length) { el.innerHTML = '<p class="empty-note">No active routes yet.</p>'; return; }
-  el.innerHTML = routes.map(r => `
-    <div class="list-row">
-      <div class="route-line">
+  el.innerHTML = routes.map(r => accRow('route', r.route_id, `
+      <span class="acc-main route-line">
         <span class="code-badge">${escapeHtml(r.route_code)}</span>
-        <div class="names">
-          <p class="list-title">${escapeHtml(r.origin_name)} to ${escapeHtml(r.destination_name)}</p>
-          <p class="list-sub">${escapeHtml(r.vehicle_type)}</p>
-        </div>
-      </div>
-      <span class="list-sub">${peso(r.base_fare)}</span>
-    </div>`).join('');
-}
-
-function applyLayerMode() {
-  if (!map || !map.isStyleLoaded()) return;
-  const set = (id, show) => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', show ? 'visible' : 'none'); };
-  set('terminals-layer', layerMode === 'all' || layerMode === 'terminals');
-  set('landmarks-layer', layerMode === 'all' || layerMode === 'landmarks');
-}
-
-function renderMapPins(mapData) {
-  if (!map || !map.isStyleLoaded()) return;
-
-  const upsert = (id, geojson) => {
-    if (map.getSource(id)) map.getSource(id).setData(geojson);
-    else map.addSource(id, { type: 'geojson', data: geojson });
-  };
-  upsert('terminals-src', mapData.terminals);
-  upsert('landmarks-src', mapData.landmarks);
-
-  if (!map.getLayer('landmarks-layer')) {
-    map.addLayer({ id: 'landmarks-layer', type: 'circle', source: 'landmarks-src',
-      paint: { 'circle-radius': 5, 'circle-color': '#f59e0b', 'circle-stroke-width': 1.5, 'circle-stroke-color': '#ffffff' } });
-  }
-  if (!map.getLayer('terminals-layer')) {
-    map.addLayer({ id: 'terminals-layer', type: 'circle', source: 'terminals-src',
-      paint: { 'circle-radius': 7, 'circle-color': '#2563eb', 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' } });
-  }
-
-  if (!clickHandlersBound) {
-    clickHandlersBound = true;
-    [['terminals-layer', 'Terminal'], ['landmarks-layer', 'Landmark']].forEach(([layerId, kind]) => {
-      map.on('click', layerId, e => {
-        const f = e.features[0];
-        new maplibregl.Popup()
-          .setLngLat(f.geometry.coordinates)
-          .setHTML(`<div style="font-weight:700;font-size:14px;">${escapeHtml(f.properties.name)}</div>
-                    <div style="color:var(--text-muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">${kind}</div>`)
-          .addTo(map);
-      });
-      map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
-    });
-  }
-
-  applyLayerMode();
-
-  const coords = (mapData.terminals.features || []).map(f => f.geometry.coordinates);
-  if (coords.length > 0 && !renderMapPins.fitted) {
-    renderMapPins.fitted = true;
-    const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
-    map.fitBounds(bounds, { padding: 60, maxZoom: 14 });
-  }
+        <span class="names">
+          <span class="list-title">${escapeHtml(routeName(r))}</span>
+          <span class="list-sub">${escapeHtml(r.vehicle_type)}</span>
+        </span>
+      </span>
+      <span class="list-sub acc-fare">${money(r.base_fare)}</span>`)).join('');
 }
 
 document.getElementById('layerSeg').addEventListener('click', e => {
@@ -273,7 +663,6 @@ document.getElementById('exportBtn').addEventListener('click', () => {
     { section: 'Summary', name: 'Active routes', a: s.active_routes, b: '' },
     { section: 'Summary', name: 'Inactive routes', a: s.inactive_routes, b: '' },
     { section: 'Summary', name: 'Terminals', a: s.total_terminals, b: '' },
-    { section: 'Summary', name: 'Landmarks', a: s.total_landmarks, b: '' },
     { section: 'Summary', name: 'Waypoints', a: s.total_waypoints, b: '' },
     { section: 'Summary', name: 'Commuters', a: s.total_users, b: '' },
     { section: 'Summary', name: 'Admins', a: s.total_admins, b: '' },
