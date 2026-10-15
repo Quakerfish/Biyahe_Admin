@@ -200,7 +200,7 @@ document.getElementById('exportSummaryBtn').addEventListener('click', () => {
   const rows = [
     ...Object.entries({
       'Total routes': s.total_routes, 'Active routes': s.active_routes, 'Inactive routes': s.inactive_routes,
-      'Terminals': s.total_terminals, 'Landmarks': s.total_landmarks, 'Waypoints': s.total_waypoints,
+      'Terminals': s.total_terminals, 'Waypoints': s.total_waypoints,
       'Commuters': s.total_users, 'Admins': s.total_admins, 'Saved routes': s.total_saved_routes
     }).map(([k, v]) => ({ section: 'Summary', label: k, signups: v, saved: '' })),
     ...t.labels.map((l, i) => ({ section: '7-day trend', label: l, signups: t.signups[i], saved: t.saved_routes[i] }))
